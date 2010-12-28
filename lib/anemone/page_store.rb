@@ -58,6 +58,12 @@ module Anemone
       has_key? url
     end
 
+    # return only links that are not present in the store
+    def new_links(urls)
+      new_urls = Array.new(urls)
+      return new_urls.delete_if { |url| has_page?(url)} || []
+    end
+    
     #
     # Use a breadth-first search to calculate the single-source
     # shortest paths from *root* to all pages in the PageStore

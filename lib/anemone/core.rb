@@ -1,11 +1,8 @@
 require 'thread'
 require 'robots'
-require 'anemone/tentacle'
-require 'anemone/page'
-require 'anemone/exceptions'
-require 'anemone/page_store'
-require 'anemone/storage'
-require 'anemone/storage/base'
+require 'tentacle'
+require 'page'
+require 'exceptions'
 
 module Anemone
 
@@ -20,8 +17,6 @@ module Anemone
 
   class Core
 
-    # PageStore storing all Page objects encountered during the crawl
-    attr_reader :pages
     # Hash of options for the crawl
     attr_reader :opts
 
@@ -156,18 +151,15 @@ module Anemone
 
       loop do
         page = page_queue.deq
-        @pages.touch_key page.url
         puts "#{page.url} Queue: #{link_queue.size}" if @opts[:verbose]
-        do_page_blocks page
         page.discard_doc! if @opts[:discard_page_bodies]
 
         links = links_to_follow page
         links.each do |link|
           link_queue << [link, page.url.dup, page.depth + 1]
         end
-        @pages.touch_keys links
-
-        @pages[page.url] = page
+        
+        do_page_blocks page
 
         # if we are done with the crawl, tell the threads to end
         if link_queue.empty? and page_queue.empty?
@@ -191,8 +183,6 @@ module Anemone
     def process_options
       @opts = DEFAULT_OPTS.merge @opts
       @opts[:threads] = 1 if @opts[:delay] > 0
-      storage = Anemone::Storage::Base.new(@opts[:storage] || Anemone::Storage.Hash)
-      @pages = PageStore.new(storage)
       @robots = Robots.new(@opts[:user_agent]) if @opts[:obey_robots_txt]
 
       freeze_options
@@ -212,7 +202,7 @@ module Anemone
     # Execute the after_crawl blocks
     #
     def do_after_crawl_blocks
-      @after_crawl_blocks.each { |block| block.call(@pages) }
+      @after_crawl_blocks.each { |block| block.call() }
     end
 
     #
@@ -239,14 +229,12 @@ module Anemone
     end
 
     #
-    # Returns +true+ if *link* has not been visited already,
-    # and is not excluded by a skip_link pattern...
+    # Returns +true+ if *link* is not excluded by a skip_link pattern...
     # and is not excluded by robots.txt...
     # and is not deeper than the depth limit
     # Returns +false+ otherwise.
     #
     def visit_link?(link, from_page = nil)
-      !@pages.has_page?(link) &&
       !skip_link?(link) &&
       !skip_query_string?(link) &&
       allowed(link) &&

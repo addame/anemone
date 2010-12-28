@@ -1,6 +1,6 @@
 require 'net/https'
-require 'anemone/page'
-require 'anemone/cookie_store'
+require 'page'
+require 'cookie_store'
 
 module Anemone
   class HTTP

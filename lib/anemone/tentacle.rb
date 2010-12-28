@@ -1,4 +1,4 @@
-require 'anemone/http'
+require 'http'
 
 module Anemone
   class Tentacle
