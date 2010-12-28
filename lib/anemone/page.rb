@@ -70,6 +70,46 @@ module Anemone
     end
 
     #
+    # Array of distinct all A tag HREFs from the page 
+    #
+    def all_links
+      return @all_links unless @all_links.nil?
+      @all_links = []
+      return @all_links if !doc
+
+      doc.search("//a[@href]").each do |a|
+        u = a['href']
+        next if u.nil? or u.empty?
+        abs = to_absolute(URI(u)) rescue next
+        @all_links << abs #if in_domain?(abs)
+      end
+      @all_links.uniq!
+      @all_links
+    end    
+    
+    #
+    # Array of distinct A tag HREFs from the page that are not from the same domain
+    #
+    def external_links
+      return @external_links unless @external_links.nil?
+      @external_links = []
+      return @external_links if !doc
+
+      doc.search("//a[@href]").each do |a|
+        u = a['href']
+        next if u.nil? or u.empty?
+        abs = to_absolute(URI(u)) rescue next
+        @external_links << abs unless in_domain?(abs)
+      end
+      @external_links.uniq!
+      @external_links
+    end
+    
+    # aliase fro links
+    def domain_links
+      links
+    end
+    #
     # Nokogiri document for the HTML body
     #
     def doc
@@ -158,11 +198,11 @@ module Anemone
     end
 
     def marshal_dump
-      [@url, @headers, @data, @body, @links, @code, @visited, @depth, @referer, @redirect_to, @response_time, @fetched]
+      [@url, @headers, @data, @body, @links, @external_links, @all_links, @code, @visited, @depth, @referer, @redirect_to, @response_time, @fetched]
     end
 
     def marshal_load(ary)
-      @url, @headers, @data, @body, @links, @code, @visited, @depth, @referer, @redirect_to, @response_time, @fetched = ary
+      @url, @headers, @data, @body, @links, @external_links, @all_links, @code, @visited, @depth, @referer, @redirect_to, @response_time, @fetched = ary
     end
 
     def to_hash
@@ -171,6 +211,8 @@ module Anemone
        'data' => Marshal.dump(@data),
        'body' => @body,
        'links' => links.map(&:to_s), 
+       'all_links' => all_links.map(&:to_s), 
+       'external_links' => external_links.map(&:to_s), 
        'code' => @code,
        'visited' => @visited,
        'depth' => @depth,
@@ -186,6 +228,8 @@ module Anemone
        '@data' => Marshal.load(hash['data']),
        '@body' => hash['body'],
        '@links' => hash['links'].map { |link| URI(link) },
+       '@all_links' => hash['all_links'].map { |link| URI(link) },       
+       '@external_links' => hash['external_links'].map { |link| URI(link) },
        '@code' => hash['code'].to_i,
        '@visited' => hash['visited'],
        '@depth' => hash['depth'].to_i,
