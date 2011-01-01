@@ -1,6 +1,7 @@
-$: << File.expand_path('..', __FILE__) # $: << File.expand_path('../..', __FILE__)
+$: << File.expand_path('..', __FILE__) 
 $: << File.expand_path('../anemone', __FILE__)
 $: << File.expand_path('../anemone/storage', __FILE__)
+
 
 require "anemone"
 require 'anemone/exceptions'
@@ -9,10 +10,10 @@ require 'anemone/storage'
 require 'anemone/storage/base'
 
 
-#@url = "http://www.example.com/"
-@url = URI("http://fifi.dzairnews.com/")
+@url = URI("http://www.example.com/")
 
 storage = Anemone::Storage::Base.new(Anemone::Storage.Hash) # toutes les possibilités : Redis, Hash, MongoDB, PStore, TokyoCabinet
+#storage = Anemone::Storage::Base.new(Anemone::Storage.MongoDB({:recreate=>false,:host=> nil, :port=> nil, :pool_size=> 1, :timeout==> 5}))
 @pages_store = Anemone::PageStore.new(storage)
 
 return if @pages_store.has_page?(@url)

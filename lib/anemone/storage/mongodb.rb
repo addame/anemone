@@ -11,11 +11,13 @@ module Anemone
 
       BINARY_FIELDS = %w(body headers data)
 
-      def initialize(mongo_db, collection_name)
+      def initialize(mongo_db, collection_name,params = {})
         @db = mongo_db
         @collection = @db[collection_name]
-        @collection.remove
-        @collection.create_index 'url'
+        if params[:recreate]
+          @collection.remove
+          @collection.create_index 'url'
+        end 
       end
 
       def [](url)
