@@ -124,6 +124,16 @@ module Anemone
         core.pages.values.first.doc.should be_nil
       end
 
+      it "should discard these pages *after* focus_crawl is called (http://github.com/chriskite/anemone/issues#issue/5)" do
+        Anemone.crawl(FakePage.new('0', :hrefs => 'http://somewhere.else/').url,
+          @opts.merge({:discard_page_bodies => true})) do |a|
+          a.focus_crawl do |p|
+            p.doc.should_not be_nil
+            [] #return an enumerable for focus_crawl to chew
+          end
+        end
+      end      
+      
       it "should provide a focus_crawl method to select the links on each page to follow" do
         pages = []
         pages << FakePage.new('0', :links => ['1', '2'])
@@ -157,8 +167,8 @@ module Anemone
         pages << FakePage.new('0', :links => '1')
         pages << FakePage.new('1')
         pages << FakePage.new('robots.txt',
-                              :body => "User-agent: *\nDisallow: /1",
-                              :content_type => 'text/plain')
+          :body => "User-agent: *\nDisallow: /1",
+          :content_type => 'text/plain')
 
         core = Anemone.crawl(pages[0].url, @opts.merge({:obey_robots_txt => true}))
         urls = core.pages.keys
@@ -265,11 +275,11 @@ module Anemone
     describe "options" do
       it "should accept options for the crawl" do
         core = Anemone.crawl(SPEC_DOMAIN, :verbose => false,
-                                          :threads => 2,
-                                          :discard_page_bodies => true,
-                                          :user_agent => 'test',
-                                          :obey_robots_txt => true,
-                                          :depth_limit => 3)
+          :threads => 2,
+          :discard_page_bodies => true,
+          :user_agent => 'test',
+          :obey_robots_txt => true,
+          :depth_limit => 3)
 
         core.opts[:verbose].should == false
         core.opts[:threads].should == 2

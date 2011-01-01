@@ -152,9 +152,10 @@ module Anemone
       loop do
         page = page_queue.deq
         puts "#{page.url} Queue: #{link_queue.size}" if @opts[:verbose]
-        page.discard_doc! if @opts[:discard_page_bodies]
 
         links = links_to_follow page
+        page.discard_doc! if @opts[:discard_page_bodies]
+
         links.each do |link|
           link_queue << [link, page.url.dup, page.depth + 1]
         end
